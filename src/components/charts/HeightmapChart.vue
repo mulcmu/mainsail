@@ -191,7 +191,7 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
     isOutsideCircle(x: number, y: number): boolean {
         if (!this.isRoundBed) return false
         const [cx, cy] = this.roundBedCenter
-        return Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) - 15 > this.roundBedRadius
+        return Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) - 25 > this.roundBedRadius
     }
 
 
