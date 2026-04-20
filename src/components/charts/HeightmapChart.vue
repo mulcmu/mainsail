@@ -182,7 +182,7 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
     }
 
     get roundBedCenter(): number[] {
-        if (!this.bed_mesh) return [0, 0]
+        if (!this.bed_mesh?.mesh_min || !this.bed_mesh?.mesh_max) return [0, 0]
         const cx = (this.bed_mesh.mesh_min[0] + this.bed_mesh.mesh_max[0]) / 2
         const cy = (this.bed_mesh.mesh_min[1] + this.bed_mesh.mesh_max[1]) / 2
         return [cx, cy]
