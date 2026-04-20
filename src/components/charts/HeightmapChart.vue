@@ -33,7 +33,7 @@ interface HeightmapSerie {
     dataShape?: number[]
     itemStyle?: {
         opacity?: number
-        color?: number[] | ((params: any) => number[] | null)
+        color?: number[]
     }
     wireframe: {
         show: boolean
@@ -188,19 +188,12 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
         return [cx, cy]
     }
 
-    get circularMaskColor(): ((params: any) => number[] | null) | undefined {
-        if (!this.isRoundBed) return undefined
-
-        const cx = this.roundBedCenter[0]
-        const cy = this.roundBedCenter[1]
-        const radius = this.roundBedRadius
-
-        return (params: any) => {
-            const [x, y] = params.data as number[]
-            const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2)
-            return dist > radius ? [0, 0, 0, 0] : null
-        }
+    isOutsideCircle(x: number, y: number): boolean {
+        if (!this.isRoundBed) return false
+        const [cx, cy] = this.roundBedCenter
+        return Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) > this.roundBedRadius
     }
+
 
     get series(): HeightmapSerie[] {
         const series: HeightmapSerie[] = []
@@ -221,7 +214,7 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             data: [],
             itemStyle: {
                 opacity: 1,
-                color: this.circularMaskColor,
+                color: this.isRoundBed ? ([1, 0, 0, 1] as unknown as number[]) : undefined,
             },
             wireframe: { show: this.wireframe },
         }
@@ -242,7 +235,9 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             this.bed_mesh.probed_matrix.forEach((meshRow: number[]) => {
                 let xPoint = 0
                 meshRow.forEach((value: number) => {
-                    data.push([xMin + xStep * xPoint, yMin + yStep * yPoint, value])
+                    const px = xMin + xStep * xPoint
+                    const py = yMin + yStep * yPoint
+                    data.push([px, py, this.isOutsideCircle(px, py) ? NaN : value])
                     xPoint++
                 })
                 yPoint++
@@ -262,7 +257,7 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             data: [],
             itemStyle: {
                 opacity: 1,
-                color: this.circularMaskColor,
+                color: this.isRoundBed ? ([1, 0, 0, 1] as unknown as number[]) : undefined,
             },
             wireframe: { show: this.wireframe },
         }
@@ -283,7 +278,9 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             this.bed_mesh.mesh_matrix.forEach((meshRow: number[]) => {
                 let xPoint = 0
                 meshRow.forEach((value: number) => {
-                    data.push([xMin + xStep * xPoint, yMin + yStep * yPoint, value])
+                    const px = xMin + xStep * xPoint
+                    const py = yMin + yStep * yPoint
+                    data.push([px, py, this.isOutsideCircle(px, py) ? NaN : value])
                     xPoint++
                 })
                 yPoint++
