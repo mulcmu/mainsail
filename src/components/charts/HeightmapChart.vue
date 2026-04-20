@@ -33,7 +33,7 @@ interface HeightmapSerie {
     dataShape?: number[]
     itemStyle?: {
         opacity?: number
-        color?: number[]
+        color?: number[] | ((params: any) => number[] | null)
     }
     wireframe: {
         show: boolean
@@ -171,6 +171,37 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
         }
     }
 
+    get isRoundBed(): boolean {
+        const config = this.$store.state.printer.configfile?.settings?.bed_mesh
+        return config ? 'mesh_radius' in config : false
+    }
+
+    get roundBedRadius(): number {
+        const config = this.$store.state.printer.configfile?.settings?.bed_mesh
+        return config?.mesh_radius ?? 0
+    }
+
+    get roundBedCenter(): number[] {
+        if (!this.bed_mesh) return [0, 0]
+        const cx = (this.bed_mesh.mesh_min[0] + this.bed_mesh.mesh_max[0]) / 2
+        const cy = (this.bed_mesh.mesh_min[1] + this.bed_mesh.mesh_max[1]) / 2
+        return [cx, cy]
+    }
+
+    get circularMaskColor(): ((params: any) => number[] | null) | undefined {
+        if (!this.isRoundBed) return undefined
+
+        const cx = this.roundBedCenter[0]
+        const cy = this.roundBedCenter[1]
+        const radius = this.roundBedRadius
+
+        return (params: any) => {
+            const [x, y] = params.data as number[]
+            const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2)
+            return dist > radius ? [0, 0, 0, 0] : null
+        }
+    }
+
     get series(): HeightmapSerie[] {
         const series: HeightmapSerie[] = []
 
@@ -188,7 +219,10 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             type: 'surface',
             name: 'probed',
             data: [],
-            itemStyle: { opacity: 1 },
+            itemStyle: {
+                opacity: 1,
+                color: this.circularMaskColor,
+            },
             wireframe: { show: this.wireframe },
         }
 
@@ -226,7 +260,10 @@ export default class HeightmapChart extends Mixins(BaseMixin, BedmeshMixin, Them
             type: 'surface',
             name: 'mesh',
             data: [],
-            itemStyle: { opacity: 1 },
+            itemStyle: {
+                opacity: 1,
+                color: this.circularMaskColor,
+            },
             wireframe: { show: this.wireframe },
         }
 
